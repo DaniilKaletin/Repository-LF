@@ -5,7 +5,7 @@
 предметы в минимальное число контейнеров (жадно).
 Алгоритм: первый подходящий (First‑Fit).
 Язык примера: Java
-public static int firstFit(int[] weights, int W) {
+```public static int firstFit(int[] weights, int W) {
  List<Integer> bins = new ArrayList<>(); // текущие загрузки контейнеров
  for (int w : weights) {
    boolean packed = false;
@@ -21,7 +21,7 @@ public static int firstFit(int[] weights, int W) {
    }
  }
  return bins.size();
-}
+}```
 Что дописать: добавление нового элемента в bins.
 
 # Жадный алгоритм для упаковки в контейнеры (First-Fit)
