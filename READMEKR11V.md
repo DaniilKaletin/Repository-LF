@@ -217,6 +217,8 @@
 <img width="673" height="683" alt="Снимок экрана 2025-12-14 в 18 57 19" src="https://github.com/user-attachments/assets/df4853a3-cbb2-486b-94b8-785098df2043" />
 
 <img width="691" height="231" alt="Снимок экрана 2025-12-14 в 18 57 27" src="https://github.com/user-attachments/assets/1b4b072f-45bb-46b8-b4d1-5938f72a28d3" />
+
+
 # Контрольный вопрос 11. Чем отличаются Type-I и Type-II (ultrafuzzy) нечёткие множества?
 **Ответ:**
 
