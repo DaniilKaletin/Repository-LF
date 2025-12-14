@@ -1,1 +1,286 @@
-0
+# Задание 11: ResNet блоки с skip connections
+**Задача: реализовать ResNet архитектуру с остаточными блоками.**
+**Требования:**
+Residual блок: Conv → BatchNorm → ReLU → Conv → BatchNorm + skip → ReLU
+Bottleneck блок для уменьшения размерности
+Адаптация skip connection при изменении размерности
+ResNet-50 архитектура
+Код-заготовка (Python):
+import tensorflow as tf
+class ResidualBlock(tf.keras.layers.Layer):
+def __init__(self, filters, kernel_size=3, stride=1):
+super(ResidualBlock, self).__init__()
+**TODO: Создать residual block**
+self.conv1 = Conv2D(filters, kernel_size, stride, padding='same')
+self.bn1 = BatchNormalization()
+self.conv2 = Conv2D(filters, kernel_size, stride=1, padding='same')
+self.bn2 = BatchNormalization()
+Для skip connection при изменении размерности:
+self.skip_conv = Conv2D(filters, 1, stride) если необходимо
+self.skip_bn = BatchNormalization()
+pass
+def call(self, x, training=False):
+TODO: Forward pass с skip connection
+identity = x
+x = self.conv1(x)
+x = self.bn1(x, training=training)
+x = tf.nn.relu(x)
+x = self.conv2(x)
+x = self.bn2(x, training=training)
+**Skip connection (адаптация если нужна)**
+if shape(identity) != shape(x):
+identity = self.skip_conv(identity)
+identity = self.skip_bn(identity, training=training)
+x = x + identity
+x = tf.nn.relu(x)
+return x
+pass
+class BottleneckBlock(tf.keras.layers.Layer):
+def __init__(self, filters, stride=1):
+super(BottleneckBlock, self).__init__()
+**TODO: Создать bottleneck block**
+Архитектура: 1x1 conv (уменьшение) -> 3x3 conv -> 1x1 conv (увеличение)
+self.conv1 = Conv2D(filters//4, 1, stride)
+self.bn1 = BatchNormalization()
+self.conv2 = Conv2D(filters//4, 3, 1, padding='same')
+self.bn2 = BatchNormalization()
+self.conv3 = Conv2D(filters, 1, 1)
+self.bn3 = BatchNormalization()
+self.skip_conv = Conv2D(filters, 1, stride) если необходимо
+pass
+def call(self, x, training=False):
+**TODO: Forward pass bottleneck block**
+pass
+class ResNet50:
+def __init__(self, num_classes=1000):
+**TODO: Построить ResNet-50**
+Архитектура:
+Conv2D(64, 7x7, stride=2) -> BatchNorm -> ReLU -> MaxPooling
+Residual stage 1: 3 блока с 64 фильтрами
+Residual stage 2: 4 блока с 128 фильтрами
+Residual stage 3: 6 блоков с 256 фильтрами
+Residual stage 4: 3 блока с 512 фильтрами
+GlobalAveragePooling -> Dense(num_classes)
+pass
+def build_model(self, input_shape=(224, 224, 3)):
+**TODO: Построить полную модель**
+pass
+**Что нужно дополнить:**
+1. ResidualBlock с правильной skip connection логикой
+2. BottleneckBlock для более глубоких сетей
+3. Адаптацию skip connection при изменении размеров
+4. ResNet50 архитектуру
+5. Инициализацию весов
+
+# Алгоритм работы нейронной сети по блокам:
+**АЛГОРИТМ РАБОТЫ ResNet-50 ДЛЯ КЛАССИФИКАЦИИ ИЗОБРАЖЕНИЙ:**
+
+**ВХОДНЫЕ ДАННЫЕ:**
+- Изображение 224×224 пикселей, 3 канала (RGB)
+- Пиксели нормализованы в диапазон [0, 1] или [-1, 1]
+
+**БЛОК 0: НАЧАЛЬНАЯ СВЕРТКА**
+- **Conv2D**: 64 фильтра 7×7, stride=2, padding='same'
+- **Операция**: ∑(фильтр × входной патч) + bias (ядра инициализированы He normal)
+- **BatchNormalization**: Нормализация по мини-батчам
+  - Вычисление: γ × (x - μ)/√(σ² + ε) + β
+  - μ, σ² - среднее/дисперсия батча (training) или скользящие (inference)
+- **ReLU**: Активация: max(0, x)
+- **MaxPooling2D**: Окно 3×3, stride=2
+- **Результат**: 64 карты признаков 56×56
+
+**БЛОК 1: STAGE 1 (3 BOTTLENECK БЛОКА)**
+
+**БЛОК 1.1: ПЕРВЫЙ BOTTLENECK (с skip connection)**
+**СКИП-CONNECTION ПУТЬ:**
+- **Conv2D**: 256 фильтров 1×1, stride=1
+- **BatchNormalization**: Нормализация
+
+**ОСНОВНОЙ ПУТЬ:**
+- **Сжатие (1×1 conv)**:
+  - Conv2D: 64 фильтра 1×1, stride=1
+  - BatchNormalization + ReLU
+  - **Цель**: Уменьшение глубины (256→64)
+  
+- **Свертка 3×3**:
+  - Conv2D: 64 фильтра 3×3, padding='same'
+  - BatchNormalization + ReLU
+  - **Цель**: Извлечение пространственных признаков
+  
+- **Расширение (1×1 conv)**:
+  - Conv2D: 256 фильтров 1×1
+  - BatchNormalization
+  - **Цель**: Восстановление глубины (64→256)
+
+**ОБЪЕДИНЕНИЕ ПУТЕЙ:**
+- **Add**: Элементное сложение skip + основной путь
+- **ReLU**: Финальная активация
+
+**БЛОК 1.2-1.3: СЛЕДУЮЩИЕ BOTTLENECK (без изменения размерности)**
+- Аналогично блоку 1.1, но skip connection = identity
+- **Результат Stage 1**: 256 карт признаков 56×56
+
+**БЛОК 2: STAGE 2 (4 BOTTLENECK БЛОКА)**
+
+**БЛОК 2.1: ПЕРВЫЙ BOTTLENECK (с downsampling)**
+**СКИП-CONNECTION ПУТЬ:**
+- **Conv2D**: 512 фильтров 1×1, stride=2
+- **BatchNormalization**
+- **Цель**: Согласование размерностей (256→512) и пространственного сжатия
+
+**ОСНОВНОЙ ПУТЬ:**
+- **Сжатие**: 128 фильтров 1×1, stride=2 (downsampling)
+- **Свертка 3×3**: 128 фильтров, padding='same'
+- **Расширение**: 512 фильтров 1×1
+
+**РЕЗУЛЬТАТ**:
+- **Пространственное уменьшение**: 56×56 → 28×28
+- **Увеличение глубины**: 256 → 512 каналов
+
+**БЛОК 2.2-2.4: ОСТАЛЬНЫЕ BOTTLENECK**
+- Аналогично, но без downsampling
+- **Результат Stage 2**: 512 карт признаков 28×28
+
+**БЛОК 3: STAGE 3 (6 BOTTLENECK БЛОКОВ)**
+
+**БЛОК 3.1: ПЕРВЫЙ BOTTLENECK (с downsampling)**
+- **Skip connection**: 1024 фильтров 1×1, stride=2
+- **Основной путь**: 
+  - Сжатие: 256 фильтров 1×1, stride=2
+  - Свертка 3×3: 256 фильтров
+  - Расширение: 1024 фильтров 1×1
+- **Результат**: 1024 карты 14×14
+
+**БЛОК 3.2-3.6: ОСТАЛЬНЫЕ BOTTLENECK**
+- **Результат Stage 3**: 1024 карты признаков 14×14
+
+**БЛОК 4: STAGE 4 (3 BOTTLENECK БЛОКА)**
+
+**БЛОК 4.1: ПЕРВЫЙ BOTTLENECK (с downsampling)**
+- **Skip connection**: 2048 фильтров 1×1, stride=2
+- **Основной путь**:
+  - Сжатие: 512 фильтров 1×1, stride=2
+  - Свертка 3×3: 512 фильтров
+  - Расширение: 2048 фильтров 1×1
+- **Результат**: 2048 карт 7×7
+
+**БЛОК 4.2-4.3: ОСТАЛЬНЫЕ BOTTLENECK**
+- **Результат Stage 4**: 2048 карт признаков 7×7
+
+**БЛОК 5: ФИНАЛЬНАЯ ОБРАБОТКА**
+
+### **Global Average Pooling (GAP)**:
+- **Операция**: Для каждой из 2048 карт признаков 7×7:
+  - Вычисление среднего значения по всем 49 (7×7) элементам
+- **Преимущества**:
+  - Сокращение параметров (2048×7×7 → 2048)
+  - Инвариантность к пространственным сдвигам
+  - Регуляризация
+- **Результат**: Вектор из 2048 элементов
+
+**ВЫХОДНОЙ СЛОЙ**:
+- **Dense (полносвязный)**:
+  - Размер: 2048 → num_classes (обычно 1000 для ImageNet)
+  - **Инициализация весов**: He normal
+- **Softmax активация**:
+  - **Формула**: σ(z)ᵢ = eᶻⁱ / ∑ⱼ eᶻʲ
+  - **Результат**: Вероятности для каждого класса
+
+**АЛГОРИТМ ОБУЧЕНИЯ**:
+
+**ПРЯМОЙ ПРОХОД (FORWARD PASS)**:
+1. Входной тензор X (batch_size, 224, 224, 3)
+2. Применение всех слоев по цепочке
+3. Вычисление logits = модель(X)
+4. Вычисление вероятностей: P = softmax(logits)
+
+**ВЫЧИСЛЕНИЕ ПОТЕРЬ**:
+- **Функция потерь**: Categorical Crossentropy
+  - **Формула**: L = -∑ yᵢ × log(pᵢ)
+  - где y - one-hot вектор истинных меток
+  - p - предсказанные вероятности
+
+**ОБРАТНЫЙ ПРОХОД (BACKWARD PASS)**:
+
+**1. ГРАДИЕНТЫ ДЛЯ ВЫХОДНОГО СЛОЯ**:
+- ∂L/∂z = p - y (разность предсказаний и истинных меток)
+
+**2. ГРАДИЕНТЫ ЧЕРЕЗ DENSE СЛОЙ**:
+- ∂L/∂W_dense = (∂L/∂z) × hᵀ (h - выход GAP)
+- ∂L/∂b_dense = ∑(∂L/∂z)
+- ∂L/∂h = W_denseᵀ × (∂L/∂z)
+
+**3. ГРАДИЕНТЫ ЧЕРЕЗ GLOBAL AVERAGE POOLING**:
+- Распределение градиента равномерно по всем элементам карты признаков
+
+**4. ГРАДИЕНТЫ ЧЕРЕЗ BOTTLENECK БЛОКИ (CHAIN RULE)**:
+**Для последнего слоя блока (Conv2D 1×1 расширение)**:
+- ∂L/∂x_main = ∂L/∂x_total (из следующего слоя)
+- Градиенты через BatchNorm: γ × norm_grad
+
+**Для Conv2D 3×3 слоя**:
+- ∂L/∂W_conv3x3 = ∂L/∂x_next × x_prevᵀ (свертка)
+- ∂L/∂x_prev = rotate180(W_conv3x3) ★ ∂L/∂x_next (full convolution)
+
+**Для Conv2D 1×1 сжатия**:
+- Аналогично, но с другими размерами фильтров
+
+**5. ГРАДИЕНТЫ ДЛЯ SKIP CONNECTION**:
+- ∂L/∂x_skip = ∂L/∂x_total (градиент проходит напрямую)
+- Если есть Conv2D в skip: аналогично обычным сверткам
+
+**6. ОБЪЕДИНЕНИЕ ГРАДИЕНТОВ**:
+- ∂L/∂x_block = ∂L/∂x_main + ∂L/∂x_skip (градиенты суммируются)
+
+**7. ГРАДИЕНТЫ ЧЕРЕЗ НАЧАЛЬНЫЕ СЛОИ**:
+- Аналогичная процедура через все 50 слоев
+
+**ОБНОВЛЕНИЕ ВЕСОВ (OPTIMIZER: ADAM)**:
+**Для каждого параметра θ:**
+1. **Вычисление моментов**:
+   - mₜ = β₁ × mₜ₋₁ + (1 - β₁) × gₜ (первый момент)
+   - vₜ = β₂ × vₜ₋₁ + (1 - β₂) × gₜ² (второй момент)
+   
+2. **Коррекция смещения**:
+   - m̂ₜ = mₜ / (1 - β₁ᵗ)
+   - v̂ₜ = vₜ / (1 - β₂ᵗ)
+   
+3. **Обновление параметров**:
+   - θₜ = θₜ₋₁ - η × m̂ₜ / (√v̂ₜ + ε)
+
+**ИНИЦИАЛИЗАЦИЯ ВЕСОВ**:
+- **Сверточные слои**: He Normal
+  - W ∼ N(0, √(2/n_in))
+  - где n_in = kernel_height × kernel_width × input_channels
+- **BatchNorm параметры**:
+  - γ инициализируется 1 (масштаб)
+  - β инициализируется 0 (сдвиг)
+
+**ОСОБЕННОСТИ ResNet-50**:
+
+**1. РЕШЕНИЕ ПРОБЛЕМЫ ИСЧЕЗАЮЩИХ ГРАДИЕНТОВ**:
+- **Skip connections**: Градиенты могут проходить напрямую
+- **Уравнение**: h(x) = F(x) + x
+- **Градиент**: ∂L/∂x = ∂L/∂h × (∂F/∂x + 1)
+
+**2. BOTTLENECK АРХИТЕКТУРА**:
+- **Вычислительная эффективность**:
+  - Параметры: 1×1×256×64 + 3×3×64×64 + 1×1×64×256 ≈ 70K
+  - Без bottleneck: 3×3×256×256 ≈ 590K параметров
+
+**3. ИНВАРИАНТНОСТЬ К ПРЕОБРАЗОВАНИЯМ**:
+- **Начальные слои**: Простые признаки (края, текстуры)
+- **Глубокие слои**: Сложные признаки (объекты, части объектов)
+- **Skip connections**: Сохранение информации на разных уровнях абстракции
+
+**4. РЕГУЛЯРИЗАЦИЯ**:
+- **BatchNorm**: Уменьшение internal covariate shift
+- **Skip connections**: Неявная регуляризация через сумму градиентов
+- **GAP вместо FC**: Уменьшение переобучения
+
+<img width="713" height="671" alt="Снимок экрана 2025-12-14 в 18 56 52" src="https://github.com/user-attachments/assets/cc6c12ad-f765-4704-bffd-7e845ef6f68a" />
+
+<img width="673" height="683" alt="Снимок экрана 2025-12-14 в 18 57 19" src="https://github.com/user-attachments/assets/df4853a3-cbb2-486b-94b8-785098df2043" />
+
+<img width="691" height="231" alt="Снимок экрана 2025-12-14 в 18 57 27" src="https://github.com/user-attachments/assets/1b4b072f-45bb-46b8-b4d1-5938f72a28d3" />
+
