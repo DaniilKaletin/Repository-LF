@@ -1,76 +1,10 @@
 # Задание 11: ResNet блоки с skip connections
-**Задача: реализовать ResNet архитектуру с остаточными блоками.**
-**Требования:**
- Residual блок: Conv → BatchNorm → ReLU → Conv → BatchNorm + skip → ReLU
- Bottleneck блок для уменьшения размерности
- Адаптация skip connection при изменении размерности
- ResNet-50 архитектура
- Код-заготовка (Python):
- import tensorflow as tf
- class ResidualBlock(tf.keras.layers.Layer):
- def __init__(self, filters, kernel_size=3, stride=1):
- super(ResidualBlock, self).__init__()
-**TODO: Создать residual block**
- self.conv1 = Conv2D(filters, kernel_size, stride, padding='same')
- self.bn1 = BatchNormalization()
- self.conv2 = Conv2D(filters, kernel_size, stride=1, padding='same')
- self.bn2 = BatchNormalization()
- Для skip connection при изменении размерности:
- self.skip_conv = Conv2D(filters, 1, stride) если необходимо
- self.skip_bn = BatchNormalization()
- pass
- def call(self, x, training=False):
- TODO: Forward pass с skip connection
- identity = x
- x = self.conv1(x)
- x = self.bn1(x, training=training)
- x = tf.nn.relu(x)
- x = self.conv2(x)
- x = self.bn2(x, training=training)
-**Skip connection (адаптация если нужна)**
- if shape(identity) != shape(x):
- identity = self.skip_conv(identity)
- identity = self.skip_bn(identity, training=training)
- x = x + identity
- x = tf.nn.relu(x)
- return x
- pass
- class BottleneckBlock(tf.keras.layers.Layer):
- def __init__(self, filters, stride=1):
- super(BottleneckBlock, self).__init__()
-**TODO: Создать bottleneck block**
- Архитектура: 1x1 conv (уменьшение) -> 3x3 conv -> 1x1 conv (увеличение)
- self.conv1 = Conv2D(filters//4, 1, stride)
- self.bn1 = BatchNormalization()
- self.conv2 = Conv2D(filters//4, 3, 1, padding='same')
- self.bn2 = BatchNormalization()
- self.conv3 = Conv2D(filters, 1, 1)
- self.bn3 = BatchNormalization()
- self.skip_conv = Conv2D(filters, 1, stride) если необходимо
- pass
- def call(self, x, training=False):
-**TODO: Forward pass bottleneck block**
- pass
- class ResNet50:
- def __init__(self, num_classes=1000):
-**TODO: Построить ResNet-50**
- Архитектура:
- Conv2D(64, 7x7, stride=2) -> BatchNorm -> ReLU -> MaxPooling
- Residual stage 1: 3 блока с 64 фильтрами
- Residual stage 2: 4 блока с 128 фильтрами
- Residual stage 3: 6 блоков с 256 фильтрами
- Residual stage 4: 3 блока с 512 фильтрами
- GlobalAveragePooling -> Dense(num_classes)
- pass
- def build_model(self, input_shape=(224, 224, 3)):
-**TODO: Построить полную модель**
- pass
-**Что нужно дополнить:**
- 1. ResidualBlock с правильной skip connection логикой
- 2. BottleneckBlock для более глубоких сетей
- 3. Адаптацию skip connection при изменении размеров
- 4. ResNet50 архитектуру
- 5. Инициализацию весов
+
+<img width="504" height="657" alt="Снимок экрана 2025-12-14 в 19 03 03" src="https://github.com/user-attachments/assets/994c7fba-3367-4837-b6e1-d186a2fcf65c" />
+
+<img width="489" height="721" alt="Снимок экрана 2025-12-14 в 19 03 16" src="https://github.com/user-attachments/assets/983fd137-2bc7-44df-a7ca-db340c30b1be" />
+
+<img width="371" height="116" alt="Снимок экрана 2025-12-14 в 19 03 22" src="https://github.com/user-attachments/assets/f1d9f8e0-5e2d-4f89-b94e-f08afc9485cc" />
 
 # Алгоритм работы нейронной сети по блокам:
 **АЛГОРИТМ РАБОТЫ ResNet-50 ДЛЯ КЛАССИФИКАЦИИ ИЗОБРАЖЕНИЙ:**
